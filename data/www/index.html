@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MegaPanel</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>MegaPanel</h1>
+      <p class="sub">ESP32 LED matrix control</p>
+    </div>
+    <div class="badges">
+      <span id="wifiBadge" class="badge">wifi</span>
+      <span id="panelBadge" class="badge">panel</span>
+      <span id="fpsBadge" class="badge">fps</span>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card preview-card">
+      <div class="card-head">
+        <h2>Live preview</h2>
+        <span id="sceneLabel" class="muted">--</span>
+      </div>
+      <div class="preview-shell">
+        <canvas id="preview" width="64" height="64"></canvas>
+      </div>
+      <div class="row">
+        <button id="refreshPreview" class="button secondary">Refresh preview</button>
+        <span id="previewMeta" class="muted">--</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Scene</h2></div>
+      <label>Foreground</label>
+      <select id="foregroundSelect"></select>
+      <label>Background</label>
+      <select id="backgroundSelect"></select>
+      <div class="slider-row">
+        <label for="foregroundAlpha">Foreground alpha</label>
+        <input id="foregroundAlpha" type="range" min="0" max="255" value="255">
+        <output id="foregroundAlphaOut">255</output>
+      </div>
+      <div class="slider-row">
+        <label for="backgroundAlpha">Background alpha</label>
+        <input id="backgroundAlpha" type="range" min="0" max="255" value="255">
+        <output id="backgroundAlphaOut">255</output>
+      </div>
+      <label class="check"><input id="statusCorners" type="checkbox"> Status corners</label>
+      <div class="row">
+        <button id="applyScene" class="button">Apply scene</button>
+        <button id="reloadScene" class="button secondary">Reload</button>
+      </div>
+      <p id="sceneMessage" class="message"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Display</h2></div>
+      <div class="slider-row">
+        <label for="brightness">Brightness</label>
+        <input id="brightness" type="range" min="1" max="255" value="128">
+        <output id="brightnessOut">128</output>
+      </div>
+      <div class="row">
+        <button id="applyBrightness" class="button">Set brightness</button>
+        <button id="displayOff" class="button danger">Display off</button>
+        <button id="displayOn" class="button secondary">Display on</button>
+      </div>
+      <p id="displayMessage" class="message"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Notification</h2></div>
+      <label for="notifyText">Text</label>
+      <input id="notifyText" type="text" value="Hello from MegaPanel">
+      <label for="notifyIcon">Icon</label>
+      <select id="notifyIcon">
+        <option value="">none</option>
+        <option value="bell">bell</option>
+        <option value="mail">mail</option>
+        <option value="alert">alert</option>
+        <option value="heart">heart</option>
+        <option value="check">check</option>
+        <option value="cross">cross</option>
+        <option value="info">info</option>
+        <option value="home">home</option>
+        <option value="music">music</option>
+        <option value="star">star</option>
+      </select>
+      <label for="notifyPosition">Position</label>
+      <select id="notifyPosition">
+        <option value="bottom">bottom</option>
+        <option value="top">top</option>
+      </select>
+      <div class="row">
+        <button id="sendNotify" class="button">Send notification</button>
+      </div>
+      <p id="notifyMessage" class="message"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Weather</h2></div>
+      <label class="check"><input id="wxEnabled" type="checkbox"> Enable Open-Meteo</label>
+      <div class="two-col">
+        <div><label for="wxLat">Latitude</label><input id="wxLat" type="number" step="0.01" value="0"></div>
+        <div><label for="wxLon">Longitude</label><input id="wxLon" type="number" step="0.01" value="0"></div>
+      </div>
+      <div class="two-col">
+        <div><label for="wxRefresh">Refresh (min)</label><input id="wxRefresh" type="number" min="1" max="240" value="15"></div>
+        <div><label class="check"><input id="wxFahrenheit" type="checkbox"> Show Fahrenheit</label></div>
+      </div>
+      <div class="row">
+        <button id="saveWeather" class="button">Save weather</button>
+        <button id="refreshWeather" class="button secondary">Refresh now</button>
+      </div>
+      <p id="weatherStatus" class="muted">--</p>
+      <p id="weatherMessage" class="message"></p>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head"><h2>Data sources</h2><span class="muted">assets and prices</span></div>
+      <label class="check"><input id="dataEnabled" type="checkbox"> Enable HTTP/JSON data</label>
+      <p class="muted">Field names are dotted paths into the response, e.g. <code>bitcoin.usd</code> or <code>data.0.price</code>. Use <code>media.asset</code> for the name/price/movement display and the ticker's <code>source</code> + <code>template</code> for text.</p>
+      <div id="dataRows" class="data-rows"></div>
+      <div class="row">
+        <button id="saveData" class="button">Save sources</button>
+        <button id="refreshData" class="button secondary">Refresh now</button>
+      </div>
+      <p id="dataStatus" class="muted">--</p>
+      <p id="dataMessage" class="message"></p>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head"><h2>News feed</h2><span class="muted">vertical ticker</span></div>
+      <label class="check"><input id="newsEnabled" type="checkbox"> Enable news feed</label>
+      <label for="newsUrl">Endpoint URL</label>
+      <input id="newsUrl" type="text" placeholder="https://example.com/news.json">
+      <div class="three-col">
+        <div><label for="newsItemsField">Items field</label><input id="newsItemsField" placeholder="articles (empty = root array)"></div>
+        <div><label for="newsTitleField">Title field</label><input id="newsTitleField" placeholder="title"></div>
+        <div><label for="newsLimit">Limit</label><input id="newsLimit" type="number" min="1" max="8" value="6"></div>
+      </div>
+      <div class="two-col">
+        <div><label for="newsRefresh">Refresh (min)</label><input id="newsRefresh" type="number" min="1" max="240" value="10"></div>
+        <div><span class="muted">Shown by the <code>media.news</code> output</span></div>
+      </div>
+      <div class="row">
+        <button id="saveNews" class="button">Save news</button>
+        <button id="refreshNews" class="button secondary">Refresh now</button>
+      </div>
+      <p id="newsStatus" class="muted">--</p>
+      <p id="newsMessage" class="message"></p>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head"><h2>Playlist</h2><span class="muted">carousel</span></div>
+      <label class="check"><input id="playlistEnabled" type="checkbox"> Enable playlist</label>
+      <div class="two-col">
+        <div><label for="playlistIdle">Start after idle (s)</label><input id="playlistIdle" type="number" min="0" max="3600" value="30"></div>
+        <div><label for="playlistTransition">Transition</label>
+          <select id="playlistTransition"><option value="0">Cut</option><option value="1">Fade</option></select>
+        </div>
+      </div>
+      <p class="muted">Foreground, background and dwell seconds per entry.</p>
+      <div id="playlistRows" class="playlist-rows"></div>
+      <div class="row">
+        <button id="savePlaylist" class="button">Save playlist</button>
+        <span id="playlistNow" class="muted">--</span>
+      </div>
+      <p id="playlistMessage" class="message"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Sensors</h2></div>
+      <div id="sensorGrid" class="sensor-grid"></div>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head"><h2>Outputs</h2><span class="muted">static catalog</span></div>
+      <div id="outputList" class="output-list"></div>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head">
+        <h2>Configuration JSON</h2>
+        <span class="muted">ArduinoJson API</span>
+      </div>
+      <textarea id="configJson" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="saveConfig" class="button">Save configuration</button>
+        <button id="reloadConfig" class="button secondary">Reload</button>
+        <button id="reboot" class="button danger">Reboot</button>
+      </div>
+      <p id="configMessage" class="message"></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>MegaPanel Phase 2</span>
+    <span id="uptime">--</span>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
